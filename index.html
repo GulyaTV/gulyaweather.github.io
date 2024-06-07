@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гуля Погода</title>
+</head>
+<body>
+    <div class="app-container">
+         <div class="app-name">
+          <h1 id="name">Гуля Погода</h1>
+         </div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Найти город" autofocus>
+            <button id="search-btn">Поиск</button>
+        </div>
+        <div class="weather-container">
+            <div class="location">
+                <h2 id="city-name"></h2>
+                <p id="date"></p>
+            </div>
+            <div class="weather-info">
+                <div class="weather-now">
+                 <img id="weather-icon" src="" alt="Weather Icon">
+                 <div class="temp">
+                  <p id="temperature"><span id="temperature-value">0</span>°C</p>
+                  <p id="feels-like">Ощущается как <span id="feels-like-value">0</span>°C</p>
+                  <p id="weather-description"><span id="weather-description-value">Clear Sky</span></p>
+                 </div>
+                </div>
+                <div class="humidity-container">
+                    <img id="humidity-icon" src="https://img.icons8.com/?size=46&id=18585&format=png" alt="Humidity Icon">
+                    <p id="humidity"><span id="humidity-value">0</span>%</p>
+                </div>
+                <div class="wind-container">
+                    <img id="wind-icon" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E %3Cg fill=%22%23000%22 fill-rule=%22nonzero%22%3E %3Cpath d=%22M6 11.5h5.688a3.75 3.75 0 1 0-1.95-6.954.75.75 0 0 0 .781 1.28A2.25 2.25 0 1 1 11.688 10L6 10.001a.75.75 0 1 0 0 1.5zM2 15h9.966a1.5 1.5 0 1 1-.779 2.782.75.75 0 0 0-.78 1.281 3 3 0 1 0 1.56-5.563H1.999A.75.75 0 1 0 2 15zM16.667 13h2.251a3 3 0 1 0-1.56-5.563.75.75 0 0 0 .781 1.28 1.5 1.5 0 1 1 .779 2.782l-2.251.001a.75.75 0 1 0 0 1.5z%22/%3E %3C/g%3E %3C/svg%3E" alt="Wind Icon">
+                    <p id="wind-speed"><span id="wind-speed-value">0</span> м/сек, </p>
+                    <p id="wind-direction"><span id="wind-direction-value">' '-</span></p>
+                </div>
+                <div class="pressure-container">
+                    <img id="pressure-icon" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E %3Cg fill=%22%23000%22 fill-rule=%22nonzero%22%3E %3Cpath d=%22M13.524 9.415L15.47 7.47a.75.75 0 0 1 1.06 1.06l-1.945 1.946a3 3 0 1 1-1.06-1.06h-.001zM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z%22/%3E %3Cpath d=%22M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-.75-18.467A8.503 8.503 0 0 0 3.558 11H5v1.5H3.514a8.5 8.5 0 0 0 16.972 0H19V11h1.442a8.503 8.503 0 0 0-7.692-7.467V5h-1.5V3.533z%22/%3E %3C/g%3E %3C/svg%3E" alt="Pressure Icon">
+                    <p id="pressure"><span id="pressure-value">0</span> мм.рт.ст</p>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="five-day-weather">
+            <h3>Прогноз на 5 дней</h3>
+            <div id="forecast" class="forecast-container">
+                <!-- Прогноз на 5 дней будет добавлен здесь -->
+            </div>
+        </div>
+    <script>
+        const apiKey = '7071b5e6cb60cddd7fdab71482e51ef9';
+    
+        document.getElementById('search-btn').addEventListener('click', () => {
+            let city = document.getElementById('search-input').value;
+            getWeather(city);
+            getForecast(city);
+        });
+    
+        async function getWeather(city) {
+            const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=ru`;
+    
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+    
+                if (data.cod === "404") {
+                    alert('City not found');
+                    return;
+                }
+    
+                document.getElementById('city-name').textContent = data.name + ', ' + data.sys.country;
+                document.getElementById('date').textContent = new Date().toLocaleString();
+                document.getElementById('temperature').children[0].textContent = data.main.temp.toFixed(1);
+                document.getElementById('feels-like').children[0].textContent = data.main.feels_like.toFixed(1);
+                document.getElementById('weather-description').children[0].textContent = data.weather[0].description;
+                document.getElementById('humidity').children[0].textContent = data.main.humidity;
+                document.getElementById('wind-speed').children[0].textContent = data.wind.speed;
+                document.getElementById('wind-direction').children[0].textContent = getWindDirection(data.wind.deg);
+                // Получаем давление в гПа
+                let pressureHpa = data.main.pressure;
+                // Преобразуем гПа в мм.рт.ст.
+                let pressureMmHg = pressureHpa * 0.75008;
+                // Выводим давление в мм.рт.ст.
+                document.getElementById('pressure').children[0].textContent = pressureMmHg.toFixed(2);
+                document.getElementById('weather-icon').src = `https://openweathermap.org/img/w/${data.weather[0].icon}.png`;
+    
+            } catch (error) {
+                alert('Error retrieving weather data');
+            }
+        }
+
+        // Функция для получения направления ветра
+        function getWindDirection(degrees) {
+            const directions = ['С', 'СВ', 'В', 'ЮВ', 'Ю', 'ЮЗ', 'З', 'СЗ'];
+            const index = Math.round(degrees / 45) % 8;
+            return directions[index];
+        }
+    
+        async function getForecast(city) {
+            const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric&lang=ru&cnt=30`;
+
+           try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+             if (data.cod === "404") {
+              alert('City not found');
+              return;
+              }
+
+        const forecastContainer = document.getElementById('forecast');
+        forecastContainer.innerHTML = ''; // Clear previous forecasts
+
+        // Group by date to easily access day and night temps
+        const forecastsByDate = new Map();
+        data.list.forEach(forecast => {
+            const date = new Date(forecast.dt * 1000).toLocaleDateString('ru-RU');
+            if (!forecastsByDate.has(date)) {
+                forecastsByDate.set(date, []);
+            }
+            forecastsByDate.get(date).push(forecast);
+        });
+
+        forecastsByDate.forEach((forecasts, date) => {
+            // Assuming first is morning and last is evening, could be adjusted based on actual needs
+            const morningTemp = forecasts[0].main.temp.toFixed(1);
+            const eveningTemp = forecasts[forecasts.length - 1].main.temp.toFixed(1);
+
+            const dayOfWeek = new Date(forecasts[0].dt * 1000).toLocaleDateString('ru-RU', { weekday: 'long' });
+            const iconUrl = `https://openweathermap.org/img/w/${forecasts[0].weather[0].icon}.png`;
+
+            const forecastElement = document.createElement('div');
+            forecastElement.className = 'forecast-day';
+            forecastElement.innerHTML = `
+                <div class="forecast-date">${dayOfWeek} (${date})</div>
+                <img src="${iconUrl}" alt="Weather Icon" class="forecast-icon">
+                <div class="forecast-temp"> Днём: ${morningTemp}°C 
+                Ночью: ${eveningTemp}°C</div>
+            `;
+            forecastContainer.appendChild(forecastElement);
+        });
+
+        }catch (error) {
+        alert('Error retrieving forecast data');
+        }
+       }
+       
+        // Example city to load on startup
+        getWeather('Moscow');
+        getForecast('Moscow');
+    </script>
+<style>
+    
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #42b3db;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    
+    #weather-icon {
+        width: 70px;
+        height: auto;
+        margin-left: 40px;
+    }
+    
+    .app-container {
+        width: 100%;
+        max-width: 500px;
+        background: #80e9ec;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .search-container {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+    }
+
+    .search-container input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+
+    .search-container button {
+        padding: 10px 20px;
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-container button:hover {
+        background-color: #007bff;
+    }
+
+    .weather-container {
+        padding: 20px;
+        text-align: center;
+        background-color: #80e9ec;
+        border-radius: 10px;
+    }
+
+    .weather-info {
+        margin-top: 20px;
+    }
+
+    .humidity-container, .pressure-container, .wind-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+
+    .humidity-container img, .pressure-container img, .wind-container img {
+        margin-right: 10px;
+    }
+
+    .temp, .feels-like, #weather-description, #humidity, #pressure, #wind-speed, #wind-direction {
+        margin: 5px 0;
+    }
+
+    #humidity-icon, #pressure-icon, #wind-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .weather-now {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .app-name {
+        text-align: center;
+    }
+
+    #date {
+        font-weight: normal;
+    }
+
+    .five-day-weather {
+        padding: 20px;
+        text-align: center;
+        background-color: #80e9ec;
+        border-radius: 10px;
+        margin: 20px;
+    }
+
+    .forecast-container {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .forecast-day {
+        text-align: center;
+        margin: 10px;
+        padding: 10px;
+        border: 1px solid #42b3db;
+        border-radius: 8px;
+        width: 120px;
+        background-color: #1e90ff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .forecast-day:hover
+    {
+        background-color: #007bff;
+    }
+
+    .forecast-icon {
+        width: 50px;
+        height: auto;
+    }
+
+    .forecast-temp {
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .forecast-desc, .forecast-humidity, .forecast-wind {
+        font-size: 0.8rem;
+        margin: 5px 0;
+    }
+
+    #wind-direction {
+        margin-left: 10px;
+    }
+    .forecast-temp-morning, .forecast-temp-evening {
+    font-weight: bold;
+    margin: 5px 0;
+    }
+ </style>
+</body>
+</html>
